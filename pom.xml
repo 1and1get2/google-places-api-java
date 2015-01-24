@@ -17,6 +17,7 @@
 
     <properties>
         <compiler.version>1.7</compiler.version>
+        <java.version>1.7</java.version>
         <json.version>20140107</json.version>
         <httpclient.version>4.3.5</httpclient.version>
         <commons-io.version>1.3.2</commons-io.version>

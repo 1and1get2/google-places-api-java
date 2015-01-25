@@ -1,0 +1,11 @@
+apply plugin: 'java'
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'com.squareup.okhttp:okhttp-urlconnection:2.2.0'
+    compile 'com.squareup.okhttp:okhttp:2.2.0'
+    compile 'org.json:json:20141113'
+    compile project(':volley')
+    compile 'org.apache.httpcomponents:httpclient:4.4-beta1'
+    compile 'commons-io:commons-io:2.4+'
+}

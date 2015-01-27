@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 all credit goes to the original author: https://github.com/windy1/google-places-api-java/releases
 I just added gradle support, and currently working on implement volley and okhttp 2.0 support for my android app.
 
@@ -5,6 +6,8 @@ Derek - 2015/01/24
 ---------------------------------
 
 
+=======
+>>>>>>> 8ce06a5376c12f70a612fcc581ee87a7c1bc99a5
 # google-places-api-java
 
 **Notice:** Before using this library, you must [register an API key for Google Places API](https://developers.google.com/places/documentation/#Authentication).

@@ -1,1 +1,10 @@
+<<<<<<< HEAD
 /build
+=======
+/target/
+*.iml
+/.idea/
+/out/
+.DS_Store
+dependency-reduced-pom.xml
+>>>>>>> 8ce06a5376c12f70a612fcc581ee87a7c1bc99a5

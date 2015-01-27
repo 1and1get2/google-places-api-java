@@ -1,5 +1,6 @@
 apply plugin: 'java'
 
+<<<<<<< HEAD
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.squareup.okhttp:okhttp-urlconnection:2.2.0'
@@ -9,3 +10,32 @@ dependencies {
     compile 'org.apache.httpcomponents:httpclient:4.4-beta1'
     compile 'commons-io:commons-io:2.4+'
 }
+=======
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.springframework.android:spring-android-rest-template:1.0.1.RELEASE'
+//    compile 'net.schmizz:sshj:0.10.0'
+    compile 'org.apache.httpcomponents:httpclient:4.4-alpha1'
+    compile 'commons-io:commons-io:2.4'
+    compile 'org.json:json:20141113'
+    compile 'junit:junit:4.11'
+}
+
+sourceSets {
+    main.java.srcDirs = ['src/main/java','src/test/java']
+    main.resources.srcDirs = ['src/main/java','src/test/java']
+    test.java.srcDirs = ['tests/java']
+    test.resources.srcDirs = ['tests/resources']
+}
+buildscript {
+    repositories {
+        maven {
+            url 'repo1.maven.org/maven2';
+        }
+    }
+
+}
+>>>>>>> 8ce06a5376c12f70a612fcc581ee87a7c1bc99a5

@@ -1,6 +1,12 @@
 package com.derek.places;
 
 import com.derek.places.exception.GooglePlacesException;
+import com.squareup.okhttp.Call;
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
 
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -19,6 +25,13 @@ import java.util.List;
  * <a href="https://developers.google.com/places/">https://developers.google.com/places/</a>
  */
 public class GooglePlaces {
+
+	/**
+	 * The toggle for debug mode
+	 * */
+	public static final boolean DEBUG = true;
+
+
 	/**
 	 * The URL of which Google Places API is located.
 	 */
@@ -235,9 +248,17 @@ public class GooglePlaces {
 	public static final String TYPE_VETERINARY_CARE = "veterinary_care";
 	public static final String TYPE_ZOO = "zoo";
 
+	public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+	private static final boolean D = DEBUG;
+	private static final String TAG = GooglePlaces.class.getSimpleName();
+
 	private String apiKey;
+	private boolean ifUseOkHttp;
+
+	@Deprecated
 	private RequestHandler requestHandler;
-	private boolean debugModeEnabled;
+	private OkHttpClient okHttpClient;
+	private boolean debugModeEnabled = D;
 
 	/**
 	 * Creates a new GooglePlaces object using the specified API key and the specified {@link RequestHandler}.
@@ -245,18 +266,33 @@ public class GooglePlaces {
 	 * @param apiKey         that has been registered on the Google Developer Console
 	 * @param requestHandler to handle HTTP traffic
 	 */
+	@Deprecated
 	public GooglePlaces(String apiKey, RequestHandler requestHandler) {
 		this.apiKey = apiKey;
 		this.requestHandler = requestHandler;
+		this.ifUseOkHttp = true;
 	}
-
+	/**
+	 * Creates a new GooglePlaces object using the specified API key and the specified {@link RequestHandler}.
+	 *
+	 * @param apiKey         that has been registered on the Google Developer Console
+	 * @param okHttpClient to handle HTTP operations
+	 */
+	@Deprecated
+	public GooglePlaces(String apiKey, OkHttpClient okHttpClient) {
+		this.ifUseOkHttp = true;
+		this.apiKey = apiKey;
+		this.okHttpClient = okHttpClient;
+	}
+	@Deprecated
 	/**
 	 * Creates a new GooglePlaces object using the specified API key.
 	 *
 	 * @param apiKey that has been registered on the Google Developer Console
 	 */
 	public GooglePlaces(String apiKey) {
-		this(apiKey, new DefaultRequestHandler());
+//		this(apiKey, new DefaultRequestHandler());
+		this(apiKey, new OkHttpClient());
 	}
 
 	/**
@@ -266,6 +302,7 @@ public class GooglePlaces {
 	 * @param apiKey            that has been registered on the Google Developer Console
 	 * @param characterEncoding to parse data with
 	 */
+	@Deprecated
 	public GooglePlaces(String apiKey, String characterEncoding) {
 		this(apiKey, new DefaultRequestHandler(characterEncoding));
 	}
@@ -463,6 +500,14 @@ public class GooglePlaces {
 	}
 
 	/**
+	 * Returns the OkHttpClient that handles HTTP requests to Google's server.
+	 *
+	 * @return OkHttpClient for HTTP traffic
+	 */
+	public OkHttpClient getOkHttpClient() {
+		return okHttpClient;
+	}
+	/**
 	 * Returns the interface that handles HTTP requests to Google's server.
 	 *
 	 * @return request handler for HTTP traffic
@@ -470,6 +515,8 @@ public class GooglePlaces {
 	public RequestHandler getRequestHandler() {
 		return requestHandler;
 	}
+
+
 
 	/**
 	 * Sets the request handler to delegate HTTP traffic.
@@ -479,6 +526,17 @@ public class GooglePlaces {
 	public void setRequestHandler(RequestHandler requestHandler) {
 		this.requestHandler = requestHandler;
 	}
+
+	/**
+	 * Sets the okHttpClient to delegate HTTP traffic.
+	 *
+	 * @param okHttpClient to handle HTTP traffic
+	 */
+	public void setOkHttpClient(OkHttpClient okHttpClient) {
+		this.okHttpClient = okHttpClient;
+	}
+
+
 
 	/**
 	 * Returns the places at the specified latitude and longitude within the specified radius. If the specified limit
@@ -931,6 +989,38 @@ public class GooglePlaces {
 		return getPredictions(input, METHOD_QUERY_AUTOCOMPLETE, extraParams);
 	}
 
+	/**
+	 * TODO: may not be right
+	 * Do a post request to a url and retrive the content as a raw string
+	 *
+	 * @param url       url
+	 * @param json string to append to request url
+	 * @return list of predictions
+	 */
+	private String doPost(String url, String json) throws IOException {
+		RequestBody body = RequestBody.create(JSON, json);
+		Request request = new Request.Builder()
+				.url(url)
+				.post(body)
+				.build();
+		Response response = okHttpClient.newCall(request).execute();
+		return response.body().string();
+	}
+	private String retriveRawOkHttp(String uri) throws Exception{
+		Request request = new Request.Builder()
+				.url("uri")
+				.build();
+
+		Call call = okHttpClient.newCall(request);
+		Response response = call.execute();
+
+		if (!response.isSuccessful()) {
+			throw new GooglePlacesException(new IOException("Unexpected code " + response));
+		}
+		System.out.println(response.body().string());
+		return response.body().string();
+	}
+	@Deprecated
 	private List<Place> getPlaces(String uri, String method, int limit) throws IOException {
 
 		limit = Math.min(limit, MAXIMUM_RESULTS); // max of 60 results possible
@@ -959,6 +1049,33 @@ public class GooglePlaces {
 		return places;
 	}
 
+	private List<Place> getPlacesVolley(String uri, String method, int limit) throws IOException {
+
+		limit = Math.min(limit, MAXIMUM_RESULTS); // max of 60 results possible
+		int pages = (int) Math.ceil(limit / (double) MAXIMUM_PAGE_RESULTS);
+
+		debug("Downloading and parsing place data from " + uri + "...");
+		debug("Limit: " + limit);
+		debug("Maximum pages: " + pages);
+
+		List<Place> places = new ArrayList<>();
+		// new request for each page
+		for (int i = 0; i < pages; i++) {
+			debug("Page: " + (i + 1));
+			String raw = requestHandler.get(uri);
+			String nextPage = parse(this, places, raw, limit);
+			if (nextPage != null) {
+				limit -= MAXIMUM_PAGE_RESULTS;
+				uri = String.format("%s%s/json?pagetoken=%s&key=%s",
+						API_URL, method, nextPage, apiKey);
+				sleep(3000); // Page tokens have a delay before they are available
+			} else {
+				break;
+			}
+		}
+
+		return places;
+	}
 	private void sleep(long millis) {
 		try {
 			Thread.sleep(millis);
